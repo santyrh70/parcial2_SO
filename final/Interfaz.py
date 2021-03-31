@@ -1,5 +1,6 @@
 import socket
 import threading
+import sys
 from tkinter import *
 from tkinter import ttk
 from datetime import datetime
@@ -7,42 +8,94 @@ from datetime import datetime
 
 
 
-class Aplicacion():
 
-   
+def main():
 
-    def __init__(self):
-        self.conection()
-        self.MainApp()
-        
-    def conection(self):
-        self.mi_socket=socket.socket()
-        self.mi_socket.connect(('localhost',8000))
+    MainApp()
+
+
+
+
+  
+def MainApp():
+    try:
+        mi_socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        mi_socket.connect(('localhost',8001))
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y"+"-"+"%H:%M:%S")
         print(dt_string)
         finalstring=("{cmd:send, src:GUI, dst:GestorArc,msg:log->"+dt_string+"}")
-        self.mi_socket.send(finalstring.encode())
-        self.respuesta=self.mi_socket.recv(1024)
-        print(self.respuesta)
-      
-    def MainApp(self):
+        mi_socket.send(finalstring.encode())
+        respuesta=mi_socket.recv(1024)
+        print(respuesta)        
+        raiz = Tk()
+        raiz.geometry('600x600')
+        raiz.configure(bg = 'beige')
+        raiz.title('Aplicación')
+        app1 = ttk.Button(raiz, text='App1', command=lambda:open("OpenApp1"))                 
+        app1.place(x=25, y=100)
+        app1C = ttk.Button(raiz, text='App1 close', command=lambda:open("CloseApp2"))                  
+        app1C.place(x=100, y=100)
+        app2 = ttk.Button(raiz, text='App2', command=lambda:open("OpenApp2"))                 
+        app2.place(x=25, y=200)
+        app2C = ttk.Button(raiz, text='App2 close', command=lambda:open("CloseApp2"))                  
+        app2C.place(x=100, y=200)
+        app3 = ttk.Button(raiz, text='App3', command=lambda:open("OpenApp3"))                 
+        app3.place(x=25, y=300)
+        app3C = ttk.Button(raiz, text='App3 close', command=lambda:open("CloseApp3"))                  
+        app3C.place(x=100, y=300) 
 
-        self.raiz = Tk()
-        self.raiz.geometry('700x700')
-        self.raiz.configure(bg = 'beige')
-        self.raiz.title('Aplicación')
-        self.binfo = ttk.Button(self.raiz, text='Info', command=self.app1)                      
-        self.binfo.pack(side=LEFT)
-        self.bsalir = ttk.Button(self.raiz, text='Salir', command=self.raiz.destroy)                        
-        self.bsalir.pack(side=RIGHT)
-        self.raiz.mainloop()
-    
-    def app1(self):
-        window = Tk()
-        window.title("Application") 
-        window.geometry('300x300')
-        window.mainloop()
+        folder = Entry(raiz)
+        folder.place(x=225, y=400) 
+        
+        crt = ttk.Button(raiz, text='Crear carpeta',command=lambda:createF(folder.get()))
+        crt.place(x=150, y=450) 
+ 
+        dlt = ttk.Button(raiz, text='Borrar carpeta',command=lambda:deleteF(folder.get()))
+        dlt.place(x=350, y=450)  
+        raiz.mainloop()
+        mi_socket.close()
+    except:
+        print("stop")
+        sys.exit(1)
+
+
+def open(msg):
+    mi_socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    mi_socket.connect(('localhost',8001))
+    now = datetime.now()
+    dt_string = now.strftime("%d/%m/%Y"+"-"+"%H:%M:%S")
+    finalstring=("{cmd:send, src:GUI, dst:App, msg:"+msg+"->"+dt_string+"}")
+    print(finalstring)
+    mi_socket.send(finalstring.encode())
+    respuesta=mi_socket.recv(1024)
+    mi_socket.close()
+
+def createF(name):
+    mi_socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    mi_socket.connect(('localhost',8001))
+    now = datetime.now()
+    dt_string = now.strftime("%d/%m/%Y"+"-"+"%H:%M:%S")
+    finalstring=("{cmd:send, src:GUI, dst:FileManagement, msg:create "+name+"->"+dt_string+"}")
+    mi_socket.send(finalstring.encode())
+
+    mi_socket.close()
+
+
+def deleteF(name):
+    mi_socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    mi_socket.connect(('localhost',8001))
+    now = datetime.now()
+    dt_string = now.strftime("%d/%m/%Y"+"-"+"%H:%M:%S")
+    finalstring=("{cmd:send, src:GUI, dst:FileManagement, msg:Delete "+name+"->"+dt_string+"}")
+    print(finalstring)
+    mi_socket.send(finalstring.encode())
+    respuesta=mi_socket.recv(1024)
+    mi_socket.close()
+
+   
+
+
 
 
 
