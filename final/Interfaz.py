@@ -5,29 +5,21 @@ from tkinter import *
 from tkinter import ttk
 from datetime import datetime
 
-
-
-
-
-def main():
-
-    MainApp()
-
+mi_socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+mi_socket.connect(('localhost',8001))
 
 
 
   
 def MainApp():
     try:
-        mi_socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        mi_socket.connect(('localhost',8001))
+       
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y"+"-"+"%H:%M:%S")
-        print(dt_string)
         finalstring=("{cmd:send, src:GUI, dst:GestorArc,msg:log->"+dt_string+"}")
-        mi_socket.send(finalstring.encode())
+        mi_socket.send("GUI".encode())
         respuesta=mi_socket.recv(1024)
-        print(respuesta)        
+        print(respuesta)      
         raiz = Tk()
         raiz.geometry('600x600')
         raiz.configure(bg = 'beige')
@@ -54,6 +46,7 @@ def MainApp():
         dlt = ttk.Button(raiz, text='Borrar carpeta',command=lambda:deleteF(folder.get()))
         dlt.place(x=350, y=450)  
         raiz.mainloop()
+
         mi_socket.close()
     except:
         print("stop")
@@ -61,37 +54,32 @@ def MainApp():
 
 
 def open(msg):
-    mi_socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    mi_socket.connect(('localhost',8001))
+
     now = datetime.now()
     dt_string = now.strftime("%d/%m/%Y"+"-"+"%H:%M:%S")
-    finalstring=("{cmd:send, src:GUI, dst:App, msg:"+msg+"->"+dt_string+"}")
+    finalstring=("cmd:send, src:GUI, dst:App, msg:"+msg+"->"+dt_string)
     print(finalstring)
     mi_socket.send(finalstring.encode())
-    respuesta=mi_socket.recv(1024)
-    mi_socket.close()
+
 
 def createF(name):
-    mi_socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    mi_socket.connect(('localhost',8001))
+
     now = datetime.now()
     dt_string = now.strftime("%d/%m/%Y"+"-"+"%H:%M:%S")
-    finalstring=("{cmd:send, src:GUI, dst:FileManagement, msg:create "+name+"->"+dt_string+"}")
+    finalstring=("cmd:send, src:GUI, dst:FileManagement, msg:create "+name+"->"+dt_string)
     mi_socket.send(finalstring.encode())
 
-    mi_socket.close()
 
 
 def deleteF(name):
-    mi_socket=socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    mi_socket.connect(('localhost',8001))
+
     now = datetime.now()
     dt_string = now.strftime("%d/%m/%Y"+"-"+"%H:%M:%S")
-    finalstring=("{cmd:send, src:GUI, dst:FileManagement, msg:Delete "+name+"->"+dt_string+"}")
+    finalstring=("cmd:send, src:GUI, dst:FileManagement, msg:Delete "+name+"->"+dt_string)
     print(finalstring)
     mi_socket.send(finalstring.encode())
-    respuesta=mi_socket.recv(1024)
-    mi_socket.close()
+
+
 
    
 
@@ -99,3 +87,4 @@ def deleteF(name):
 
 
 
+MainApp()
