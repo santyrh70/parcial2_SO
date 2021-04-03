@@ -5,13 +5,12 @@ import os
 import pickle
 import errno
 
+
 class GestorArchivos():
     """docstring for GestorArchivos""" 
     def __init__(self, host="localhost", port=4000):
 
-        self.commands = {
-            'res': 'hola'
-        }
+        self.cerrar_bool = False
         
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((str(host), int(port)))
@@ -23,20 +22,26 @@ class GestorArchivos():
         msg_recv.start()
 
         while True:
+            '''
             msg = input('->')
             if msg != 'salir':
                 self.send_msg(msg)
             else:
                 self.sock.close()
                 sys.exit()
+            '''
+            self.cerrar()
 
     def msg_recv(self):
         while True:
+            self.cerrar()
             try:
                 data = self.sock.recv(1024)
                 if data:
                     msg = pickle.loads(data)
                     print(msg)
+                    if msg == 'salir':
+                        self.cerrar_bool = True
                     self.procesar(msg)
             except:
                 pass
@@ -68,8 +73,9 @@ class GestorArchivos():
                 if e.errno != errno.EEXIST:
                     raise
         elif do == 'log':
+            print(f'esto es lo que recibo {msg}')
             try:
-                self.write_log(msg)
+                self.write_log(' '.join(msg.split(' ')[1:]))
             except:
                 pass
 
@@ -77,6 +83,10 @@ class GestorArchivos():
         archivo = open('logs.txt','a')
         archivo.write(log + '\n')
         archivo.close()
+
+    def cerrar(self):
+        if self.cerrar_bool:
+            sys.exit()
 
 
 c = GestorArchivos()

@@ -11,7 +11,7 @@ class Interfaz():
     """docstring for Interfaz""" 
     def __init__(self, host="localhost", port=4000):
 
-        self.close_all = False
+        self.cerrar_bool = False
         
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((str(host), int(port)))
@@ -27,17 +27,23 @@ class Interfaz():
         graficos.start()
 
         while True:
+            '''
             msg = input('->')
             if msg != 'salir':
                 self.send_msg(msg)
             else:
                 self.sock.close()
                 sys.exit()
+            '''
+            self.cerrar()
 
     def msg_recv(self):
         while True:
+            self.cerrar()
             try:
                 data = self.sock.recv(1024)
+                if data == 'salir':
+                    self.cerrar_bool = True
                 if data:
                     print(pickle.loads(data))
             except:
@@ -72,7 +78,10 @@ class Interfaz():
  
         dlt = ttk.Button(raiz, text='Borrar carpeta',command=lambda:self.deleteF(folder.get()))
         dlt.place(x=350, y=450)  
+        raiz.after(1, func= (print('hola') if self.cerrar_bool else None))
         raiz.mainloop()
+        self.cerrar_bool = True
+        
 
     def open(self, msg):
 
@@ -99,6 +108,10 @@ class Interfaz():
         finalstring=("send;GUI;GestorArch;Delete "+name+"->"+dt_string)
         print(finalstring)
         self.sock.send(pickle.dumps(finalstring))
+
+    def cerrar(self):
+        if self.cerrar_bool:
+            sys.exit()
 
 c = Interfaz()
     

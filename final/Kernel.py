@@ -2,14 +2,15 @@ import socket
 import threading
 import sys
 import pickle
+import time
+from datetime import datetime
 
 class Kernel():
-    """docstring for Kernel"""
     def __init__(self, host="localhost", port=4000):
 
         self.clientes = []
 
-        self.msg_dst = ''
+        self.cerrar_bool = False
 
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.bind((str(host), int(port)))
@@ -28,6 +29,11 @@ class Kernel():
         while True:
             cmd = input('->')
             if cmd == 'salir':
+                self.cerrar_bool = True
+                print('cerrando todos los modulos...')
+                self.msg_to_all(pickle.dumps('salir'), self.sock)
+                print('modulos cerrados.')
+                time.sleep(5)
                 self.sock.close()
                 sys.exit()
             else:
@@ -48,41 +54,53 @@ class Kernel():
         except:
             self.clientes.remove(cliente)
 
+    def logs_init(self, msg):
+        now = datetime.now()
+        dt_string = now.strftime("%d/%m/%Y"+"-"+"%H:%M:%S")
+        for c in self.clientes:
+            if c[0] == 'GestorArch':
+                self.msg_to(pickle.dumps('log ' + msg + '->' + dt_string), c[1])
+
     def aceptarCon(self):
         print("aceptarCon iniciado")
         while True:
+            self.cerrar()
             try:
                 conn, addr = self.sock.accept()
-                conn.setblocking(False)
-                self.clientes.append(conn)
+                conn.setblocking(False)                
                 data = conn.recv(1024)
                 data = pickle.loads(data)
                 
                 if data:
-                    #self.msg_to_all(data,c)
-                    
                     if data == 'GestorArch':
                         print('Modulo Gestor de Archivos conectado')
+                        self.clientes.append(('GestorArch',conn))
+                        time.sleep(1)
+                        self.logs_init('Modulo Gestor de Archivos conectado')
                     elif data == 'App':
                         print('Modulo Aplicacion conectado')
+                        self.clientes.append(('App',conn))
+                        self.logs_init('Modulo Aplicacion conectado')
                     elif data == 'GUI':
                         print('Modulo GUI conectado')
+                        self.clientes.append(('GUI',conn))
+                        self.logs_init('Modulo GUI conectado')
             except:
                 pass
 
     def procesarCon(self):
         print("ProcesarCon iniciado")
         while True:
+            self.cerrar()
             if len(self.clientes) > 0:
                 for c in self.clientes:
                     try:
-                        data = c.recv(1024)
+                        data = c[1].recv(1024)
                         data = pickle.loads(data)
                         
                         if data:
                             data = data.split(';')
                             print(f'como queda la lista {data}')
-                            #self.msg_to_all(data,c)
                             if data[1] == 'GestorArch':
                                 print('soy GestorArc')
                                 self.router(data)
@@ -101,15 +119,28 @@ class Kernel():
         msg = data[3]
         if dst == 'GestorArch':
             print('intentando enviar a gest')
-            self.msg_to(pickle.dumps(msg), self.clientes[0])
+            for c in self.clientes:
+                if c[0] == 'GestorArch':
+                    self.msg_to(pickle.dumps(msg), c[1])
         elif dst == 'App':
             print('intentando enviar a app')
-            self.msg_to(pickle.dumps(msg), self.clientes[1])
-            self.msg_to(pickle.dumps('log ' + msg), self.clientes[0])
+            for c in self.clientes:
+                if c[0] == 'App':
+                    self.msg_to(pickle.dumps(msg), c[1])
+                elif c[0] == 'GestorArch':
+                    self.msg_to(pickle.dumps('log ' + msg), c[1])
+                
             print(f"mensaje de log desde app {'log ' + msg}")
         elif dst == 'GUI':
             print('intentando enviar a gui')
-            self.msg_to(pickle.dumps(msg), self.clientes[2])
-            self.msg_to(pickle.dumps('log ' + msg), self.clientes[0])
+            for c in self.clientes:
+                if c[0] == 'GUI':
+                    self.msg_to(pickle.dumps(msg), c[1])
+                elif c[0] == 'GestorArch':
+                    self.msg_to(pickle.dumps('log ' + msg), c[1])
+
+    def cerrar(self):
+        if self.cerrar_bool:
+            sys.exit()
 
 s = Kernel()
