@@ -105,8 +105,11 @@ class Kernel():
         elif dst == 'App':
             print('intentando enviar a app')
             self.msg_to(pickle.dumps(msg), self.clientes[1])
+            self.msg_to(pickle.dumps('log ' + msg), self.clientes[0])
+            print(f"mensaje de log desde app {'log ' + msg}")
         elif dst == 'GUI':
             print('intentando enviar a gui')
             self.msg_to(pickle.dumps(msg), self.clientes[2])
+            self.msg_to(pickle.dumps('log ' + msg), self.clientes[0])
 
 s = Kernel()

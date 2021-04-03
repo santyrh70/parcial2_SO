@@ -87,7 +87,7 @@ class Interfaz():
 
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y"+"-"+"%H:%M:%S")
-        finalstring=("send;GUI;GestorArch;create "+name+"->"+dt_string)
+        finalstring=("send;GUI;GestorArch;Create "+name+"->"+dt_string)
         self.sock.send(pickle.dumps(finalstring))
 
 
