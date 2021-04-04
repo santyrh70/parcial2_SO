@@ -4,7 +4,7 @@ import sys
 import os
 import pickle
 import errno
-
+from datetime import datetime
 
 class GestorArchivos():
     """docstring for GestorArchivos""" 
@@ -53,9 +53,7 @@ class GestorArchivos():
         do = msg.split('->')[0].split(' ')[0]
         name = msg.split('->')[0].split(' ')[1]
         if do == 'Create':
-            print(do, name)
             try:
-                print(f'creando carpeta... ')
                 os.mkdir(name)
                 self.write_log(msg)
                 print(f'carpeta {name} creada')
@@ -65,7 +63,6 @@ class GestorArchivos():
         elif do == 'Delete':
             try:
                 path = os.getcwd()
-                print(f'eliminando carpeta...')
                 os.rmdir(name)
                 self.write_log(msg)
                 print(f'carpeta {name} eliminada')
@@ -73,7 +70,6 @@ class GestorArchivos():
                 if e.errno != errno.EEXIST:
                     raise
         elif do == 'log':
-            print(f'esto es lo que recibo {msg}')
             try:
                 self.write_log(' '.join(msg.split(' ')[1:]))
             except:
@@ -86,8 +82,8 @@ class GestorArchivos():
 
     def cerrar(self):
         if self.cerrar_bool:
+            self.send_msg('Modulo Gestor de Archivos cerrado')
             sys.exit()
-
 
 c = GestorArchivos()
     

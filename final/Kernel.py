@@ -8,7 +8,7 @@ from datetime import datetime
 class Kernel():
     def __init__(self, host="localhost", port=4000):
 
-        self.clientes = []
+        self.clientes = [(0,0)]
 
         self.cerrar_bool = False
 
@@ -31,7 +31,7 @@ class Kernel():
             if cmd == 'salir':
                 self.cerrar_bool = True
                 print('cerrando todos los modulos...')
-                self.msg_to_all(pickle.dumps('salir'), self.sock)
+                self.msg_to_all(pickle.dumps('salir'))
                 print('modulos cerrados.')
                 time.sleep(5)
                 self.sock.close()
@@ -40,11 +40,12 @@ class Kernel():
                 pass
 
 
-    def msg_to_all(self, msg, cliente):
+    def msg_to_all(self, msg):
+        if (0,0) in self.clientes:
+            self.clientes.remove((0,0))
         for c in self.clientes:
             try:
-                if c != cliente:
-                    c.send(msg)
+                c[1].send(msg)
             except:
                 self.clientes.remove(c)
 
@@ -62,7 +63,7 @@ class Kernel():
                 self.msg_to(pickle.dumps('log ' + msg + '->' + dt_string), c[1])
 
     def aceptarCon(self):
-        print("aceptarCon iniciado")
+        print("hilo aceptarCon iniciado")
         while True:
             self.cerrar()
             try:
@@ -85,11 +86,12 @@ class Kernel():
                         print('Modulo GUI conectado')
                         self.clientes.append(('GUI',conn))
                         self.logs_init('Modulo GUI conectado')
+                
             except:
                 pass
 
     def procesarCon(self):
-        print("ProcesarCon iniciado")
+        print("hilos procesarCon iniciado")
         while True:
             self.cerrar()
             if len(self.clientes) > 0:
@@ -100,17 +102,13 @@ class Kernel():
                         
                         if data:
                             data = data.split(';')
-                            print(f'como queda la lista {data}')
+                            print(data)
                             if data[1] == 'GestorArch':
-                                print('soy GestorArc')
                                 self.router(data)
                             elif data[1] == 'App':
-                                print('soy App')
                                 self.router(data)
                             elif data[1] == 'GUI':
-                                print('soy GUI')
                                 self.router(data)
-                            
                     except:
                         pass
 
@@ -118,21 +116,16 @@ class Kernel():
         dst = data[2]
         msg = data[3]
         if dst == 'GestorArch':
-            print('intentando enviar a gest')
             for c in self.clientes:
                 if c[0] == 'GestorArch':
                     self.msg_to(pickle.dumps(msg), c[1])
         elif dst == 'App':
-            print('intentando enviar a app')
             for c in self.clientes:
                 if c[0] == 'App':
                     self.msg_to(pickle.dumps(msg), c[1])
                 elif c[0] == 'GestorArch':
                     self.msg_to(pickle.dumps('log ' + msg), c[1])
-                
-            print(f"mensaje de log desde app {'log ' + msg}")
         elif dst == 'GUI':
-            print('intentando enviar a gui')
             for c in self.clientes:
                 if c[0] == 'GUI':
                     self.msg_to(pickle.dumps(msg), c[1])
