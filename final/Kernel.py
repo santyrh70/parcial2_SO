@@ -27,17 +27,26 @@ class Kernel():
         procesar.start()
 
         while True:
-            cmd = input('->')
-            if cmd == 'salir':
-                self.cerrar_bool = True
-                print('cerrando todos los modulos...')
-                self.msg_to_all(pickle.dumps('salir'))
-                print('modulos cerrados.')
-                time.sleep(5)
-                self.sock.close()
-                sys.exit()
-            else:
-                pass
+            cmd = input('->').split(' ')
+            if cmd[0] == 'salir' and len(cmd)>1:
+                if cmd[1] == 'App':
+                    for c in self.clientes:
+                        if c[0] == 'App':
+                            self.msg_to(pickle.dumps('salir'), c[1])
+                            self.clientes.remove(c)
+                elif cmd[1] == 'GestorArch':
+                    for c in self.clientes:
+                        if c[0] == 'GestorArch':
+                            self.msg_to(pickle.dumps('salir'), c[1])
+                            self.clientes.remove(c)
+                elif cmd[1] == 'GUI':
+                    for c in self.clientes:
+                        if c[0] == 'GUI':
+                            self.msg_to(pickle.dumps('salir'), c[1])
+                            self.clientes.remove(c)
+            elif cmd[0] == 'salir':
+                self.cerrar_modulos()
+    
 
 
     def msg_to_all(self, msg):
@@ -101,20 +110,39 @@ class Kernel():
                         data = pickle.loads(data)
                         
                         if data:
+                            if data == 'salir':
+                                self.cerrar_bool = True
+                                print('cerrando todos los modulos...')
+                                self.msg_to_all(pickle.dumps('salir'))
+                                print('modulos cerrados.')
+                                time.sleep(5)
+                                self.sock.close()
+                                sys.exit()
                             data = data.split(';')
-                            print(data)
-                            if data[1] == 'GestorArch':
+                            print(data)      
+                            if data[0] == 'Error':
+                                print(f'Error inesperado en el proceso {data}')
+                            elif data[0] == 'Ocupado':
+                                print(f'Modulos ocupados... pronto se procesara el mensaje')
+                                time.sleep(3)
+                                if data[2] == 'GestorArch':
+                                    self.router(data)
+                                elif data[2] == 'App':
+                                    self.router(data)
+                                elif data[2] == 'GUI':
+                                    self.router(data)
+                            elif data[2] == 'GestorArch':
                                 self.router(data)
-                            elif data[1] == 'App':
+                            elif data[2] == 'App':
                                 self.router(data)
-                            elif data[1] == 'GUI':
+                            elif data[2] == 'GUI':
                                 self.router(data)
                     except:
                         pass
 
     def router(self, data):
-        dst = data[2]
-        msg = data[3]
+        dst = data[3]
+        msg = data[4]
         if dst == 'GestorArch':
             for c in self.clientes:
                 if c[0] == 'GestorArch':
@@ -135,5 +163,14 @@ class Kernel():
     def cerrar(self):
         if self.cerrar_bool:
             sys.exit()
+
+    def cerrar_modulos(self):
+        self.cerrar_bool = True
+        print('cerrando todos los modulos...')
+        self.msg_to_all(pickle.dumps('salir'))
+        print('modulos cerrados.')
+        time.sleep(5)
+        self.sock.close()
+        sys.exit()
 
 s = Kernel()

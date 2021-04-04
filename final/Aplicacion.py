@@ -4,8 +4,8 @@ import subprocess
 import sys
 import pickle
 
-class Cliente():
-    """docstring for Cliente"""
+class Aplicacion():
+    """docstring for Aplicacion"""
     def __init__(self, host="localhost", port=4000):
 
         self.cerrar_bool = False
@@ -41,6 +41,8 @@ class Cliente():
                     print(msg)
                     do = msg.split('->')[0].split(' ')
                     if msg == 'salir':
+                        for p in self.p_list:    
+                            p[1].kill()
                         self.cerrar_bool = True
                     if do[0] == 'OpenApp1':
                         pid_to_send = self.open_app()
@@ -71,7 +73,7 @@ class Cliente():
 
     def send_pid(self, num_app, pid):
         print(f'enviando pid: {pid} para asignar a boton: {num_app}')
-        self.sock.send(pickle.dumps(f'send;App;GUI;pid {num_app} {pid}'))
+        self.sock.send(pickle.dumps(f';send;App;GUI;pid {num_app} {pid}'))
 
     def open_app(self):
         p = subprocess.Popen('notepad.exe')
@@ -93,5 +95,5 @@ class Cliente():
         if self.cerrar_bool:
             sys.exit()
 
-c = Cliente()
+c = Aplicacion()
     

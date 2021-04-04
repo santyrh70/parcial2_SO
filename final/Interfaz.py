@@ -6,6 +6,7 @@ import pickle
 from tkinter import *
 from tkinter import ttk
 from datetime import datetime
+import random
 
 class Interfaz():
     """docstring for Interfaz""" 
@@ -13,9 +14,9 @@ class Interfaz():
 
         self.cerrar_bool = False
 
-        self.app0 = None
-        self.app1 = None
-        self.app2 = None
+        self.app0 = []
+        self.app1 = []
+        self.app2 = []
         
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect((str(host), int(port)))
@@ -57,11 +58,11 @@ class Interfaz():
                     pid = msg[2]
                     if do == 'pid':
                         if num_app == '0':
-                            self.app0 = pid
+                            self.app0.append(pid)
                         if num_app == '1':
-                            self.app1 = pid
+                            self.app1.append(pid)
                         if num_app == '2':
-                            self.app2 = pid
+                            self.app2.append(pid)
             except:
                 pass
 
@@ -75,65 +76,93 @@ class Interfaz():
         raiz.title('Aplicación')
         app1 = ttk.Button(raiz, text='App1', command=lambda:self.open_app("OpenApp1"))                 
         app1.place(x=25, y=100)
-        app1C = ttk.Button(raiz, text='App1 close', command=lambda:self.cerrar_app(raiz, "CloseApp1", self.app0))                  
+        app1C = ttk.Button(raiz, text='App1 close', command=lambda:self.cerrar_app("CloseApp1", self.app0, 0))                  
         app1C.place(x=100, y=100)
         app2 = ttk.Button(raiz, text='App2', command=lambda:self.open_app("OpenApp2"))                 
         app2.place(x=25, y=200)
-        app2C = ttk.Button(raiz, text='App2 close', command=lambda:self.cerrar_app(raiz, "CloseApp2", self.app1))                  
+        app2C = ttk.Button(raiz, text='App2 close', command=lambda:self.cerrar_app("CloseApp2", self.app1, 1))                  
         app2C.place(x=100, y=200)
         app3 = ttk.Button(raiz, text='App3', command=lambda:self.open_app("OpenApp3"))                 
         app3.place(x=25, y=300)
-        app3C = ttk.Button(raiz, text='App3 close', command=lambda:self.cerrar_app(raiz, "CloseApp3", self.app2))                  
+        app3C = ttk.Button(raiz, text='App3 close', command=lambda:self.cerrar_app("CloseApp3", self.app2, 2))                  
         app3C.place(x=100, y=300) 
 
+        closeT = ttk.Button(raiz, text='Cerrar', command=lambda:self.cerrarT(raiz))                 
+        closeT.place(x=25, y=400)
+        
         folder = Entry(raiz)
         folder.place(x=225, y=400) 
-        
         crt = ttk.Button(raiz, text='Crear carpeta',command=lambda:self.createF(folder.get()))
         crt.place(x=150, y=450) 
  
         dlt = ttk.Button(raiz, text='Borrar carpeta',command=lambda:self.deleteF(folder.get()))
         dlt.place(x=350, y=450)  
         raiz.mainloop()
-        self.cerrar_bool = True
+        
 
     def open_app(self, msg):
-
+        r = self.rand()
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y"+"-"+"%H:%M:%S")
-        finalstring=("info;GUI;App;"+msg+"->"+dt_string)
+        finalstring=(r+";info;GUI;App;"+msg+"->"+dt_string)
         print(finalstring)
         self.sock.send(pickle.dumps(finalstring))
 
-    def cerrar_app(self, raiz, msg, pid):
-        raiz.update()
-        try:
-            now = datetime.now()
-            dt_string = now.strftime("%d/%m/%Y"+"-"+"%H:%M:%S")
-            finalstring=(f"send;GUI;App;{msg} {pid}->{dt_string}")
-            self.sock.send(pickle.dumps(finalstring))
-        except:
-            pass
+    def cerrar_app(self, msg, pid, num):
+        for p in pid:
+            try:
+                now = datetime.now()
+                dt_string = now.strftime("%d/%m/%Y"+"-"+"%H:%M:%S")
+                finalstring=(f"OK;send;GUI;App;{msg} {p}->{dt_string}")
+                print(f'string que se envia {finalstring}')
+                if int(num) == 0:
+                    del self.app0[self.app0.index(p)]
+                elif int(num) == 1:
+                    del self.app1[self.app1.index(p)]
+                elif int(num) == 2:
+                    del self.app2[self.app2.index(p)]
+                self.sock.send(pickle.dumps(finalstring))
+            except:
+                pass
 
     def createF(self, name):
+        r = self.rand()
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y"+"-"+"%H:%M:%S")
-        finalstring=("send;GUI;GestorArch;Create "+name+"->"+dt_string)
+        finalstring=(r+";send;GUI;GestorArch;Create "+name+"->"+dt_string)
         print(finalstring)
         self.sock.send(pickle.dumps(finalstring))
 
-
+    def rand(self):
+        r = random.randint(1, 10)
+        res = ''
+        if r<6:
+            res = 'OK'
+        elif r>=6 and r<9:
+            res = 'Ocupado'
+        else:
+            res = 'Error'
+        return res
 
     def deleteF(self, name):
+        r = self.rand()
         now = datetime.now()
         dt_string = now.strftime("%d/%m/%Y"+"-"+"%H:%M:%S")
-        finalstring=("send;GUI;GestorArch;Delete "+name+"->"+dt_string)
+        finalstring=(r+";send;GUI;GestorArch;Delete "+name+"->"+dt_string)
         print(finalstring)
         self.sock.send(pickle.dumps(finalstring))
+
+    def cerrarT(self, raiz):
+        self.cerrar_bool = True
+        self.send_msg('salir')
+        if self.cerrar_bool:
+            raiz.destroy()
+            sys.exit()
 
     def cerrar(self):
         if self.cerrar_bool:
             sys.exit()
+
 
 c = Interfaz()
     
